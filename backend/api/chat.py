@@ -5,6 +5,7 @@ persists conversation, returns agent response.
 """
 import time
 import uuid
+from datetime import datetime
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -68,7 +69,7 @@ async def chat(body: ChatRequest, user: dict = Depends(get_current_user)):
         {
             "$set": {
                 "user_id": user_id,
-                "date": __import__("datetime").datetime.utcnow().strftime("%Y-%m-%d"),
+                "date": datetime.utcnow().strftime("%Y-%m-%d"),
             },
             "$push": {
                 "agents_used_history": {"$each": agents_used},

@@ -1,6 +1,7 @@
 """Complaint Agent — handles complaints, escalation, dissatisfaction, resolution, feedback."""
 from backend.rag.retriever import retriever
 from backend.config import settings
+from backend.agents.utils import format_history
 from langchain_openai import ChatOpenAI
 
 SYSTEM_PROMPT = """You are the Customer Resolution Specialist for TechMart Electronics.
@@ -21,17 +22,9 @@ Use ONLY the context below. Do not make promises that are not in the documentati
 """
 
 
-def _format_history(history):
-    lines = []
-    for turn in history[-5:]:
-        role = "Customer" if turn["role"] == "user" else "Assistant"
-        lines.append(f"{role}: {turn['content']}")
-    return "\n".join(lines) if lines else "No previous conversation."
-
-
 def complaint_node(state: dict) -> dict:
     query = state["query"]
-    history = _format_history(state.get("conversation_history", []))
+    history = format_history(state.get("conversation_history", []))
 
     chunks = retriever.search(query, top_k=4)
     context = "\n\n".join([c["text"] for c in chunks]) or "No relevant documents found."

@@ -4,7 +4,7 @@ from pathlib import Path
 import faiss
 import numpy as np
 from pypdf import PdfReader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from backend.embeddings.encoder import EmbeddingEncoder
 

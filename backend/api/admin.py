@@ -2,12 +2,13 @@
 Admin API — /admin/*
 Knowledge base PDF upload and re-indexing. Admin role required.
 """
+import asyncio
 import os
 import shutil
 from pathlib import Path
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile, File, status
 
 from backend.api.auth import require_admin
 from backend.database.mongo import get_db
@@ -73,21 +74,26 @@ async def upload_document(
 
 
 @router.post("/reindex")
-async def reindex_knowledge_base(admin: dict = Depends(require_admin)):
-    try:
-        ingest_documents()
-        retriever.reload()   # refresh the in-memory singleton
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Ingestion failed: {exc}")
+async def reindex_knowledge_base(
+    background_tasks: BackgroundTasks,
+    admin: dict = Depends(require_admin),
+):
+    async def _run_ingest():
+        loop = asyncio.get_event_loop()
+        try:
+            await loop.run_in_executor(None, ingest_documents)
+            retriever.reload()
+            db = get_db()
+            await db.kb_documents.update_many(
+                {},
+                {"$set": {"is_indexed": True, "last_indexed_at": datetime.utcnow()}},
+            )
+        except Exception as exc:
+            # Log and swallow — background task cannot raise HTTP exceptions
+            print(f"[reindex] ERROR: {exc}")
 
-    # Mark all documents as indexed
-    db = get_db()
-    await db.kb_documents.update_many(
-        {},
-        {"$set": {"is_indexed": True, "last_indexed_at": datetime.utcnow()}},
-    )
-
-    return {"message": "Knowledge base re-indexed successfully"}
+    background_tasks.add_task(_run_ingest)
+    return {"message": "Re-indexing started in the background. Check /admin/documents for status."}
 
 
 @router.get("/documents")
@@ -125,8 +131,9 @@ async def delete_document(
     db = get_db()
     await db.kb_documents.delete_one({"filename": safe_name})
 
-    # Trigger re-index after deletion
-    ingest_documents()
+    # Trigger re-index after deletion (non-blocking)
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(None, ingest_documents)
     retriever.reload()
 
     return {"message": f"{safe_name} deleted and index updated"}

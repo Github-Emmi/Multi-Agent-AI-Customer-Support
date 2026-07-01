@@ -13,6 +13,7 @@ from jose import JWTError, jwt
 
 from backend.config import settings
 from backend.database.mongo import get_db
+from backend.services.email import send_password_reset_email
 from backend.models.schemas import (
     RegisterRequest,
     LoginRequest,
@@ -152,8 +153,8 @@ async def request_password_reset(body: PasswordResetRequest):
         {"$set": {"reset_token": token, "reset_token_expiry": expiry}},
     )
 
-    # In production: send email via SMTP with reset link
-    # For dev: return token directly (remove in production)
+    await send_password_reset_email(user["email"], token)
+
     if settings.ENVIRONMENT == "development":
         return {"message": "Reset token generated", "dev_token": token}
     return {"message": "If that email is registered, a reset link has been sent"}

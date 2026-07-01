@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.config import settings
 from backend.database.mongo import connect_db, close_db, get_db
-from backend.api import auth, chat, history, analytics, admin
+from backend.api import auth, chat, history, analytics, admin, tickets
 
 app = FastAPI(
     title="Multi-Agent Customer Support API",
@@ -51,3 +51,4 @@ app.include_router(chat.router,      prefix="/chat",      tags=["Chat"])
 app.include_router(history.router,   prefix="/history",   tags=["History"])
 app.include_router(analytics.router, prefix="/analytics", tags=["Analytics"])
 app.include_router(admin.router,     prefix="/admin",     tags=["Admin"])
+app.include_router(tickets.router,   prefix="/tickets",   tags=["Tickets"])
