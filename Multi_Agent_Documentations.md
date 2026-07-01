@@ -91,7 +91,6 @@ Billing   Technical     Product      Complaint
 
 ### Frontend
 
-- React.js
 - Next.js
 - Tailwind CSS
 - Axios
@@ -99,14 +98,12 @@ Billing   Technical     Product      Complaint
 ### Backend
 
 - Python FastAPI (Recommended)
-- OR Node.js + Express
 
 ### AI Models
 
-Students may use:
+may use:
 
-- OpenAI GPT
-- Google Gemini
+- openrouter.ai
 - Llama 3 (via Ollama or Groq)
 - Hugging Face models
 
@@ -122,13 +119,12 @@ Recommended:
 Choose one:
 
 - FAISS (Recommended)
-- ChromaDB
 - Pinecone (Cloud)
 
 ### Database
 
-- MongoDB
-- PostgreSQL
+- MongoDB Atlas (Recommended)
+
 
 ### Deployment
 
@@ -143,16 +139,15 @@ Choose one:
 ## 6. Software Requirements
 
 - Python 3.11+
-- Node.js 20+
 - VS Code
 - Git
-- Docker (Optional)
+- Docker
 
 **Python Libraries:**
 
 - FastAPI
 - LangChain
-- LangGraph (Optional)
+- LangGraph 
 - FAISS
 - ChromaDB
 - Sentence Transformers
@@ -231,7 +226,7 @@ Routes requests to one or multiple specialized agents.
 **Handles**
 
 - Login
-- Password reset
+- Password reset (free email host for reset code confirmation)
 - Installation
 - Errors
 - Bugs
@@ -244,6 +239,8 @@ Routes requests to one or multiple specialized agents.
 - Pricing
 - Comparisons
 - Availability
+- Warranty
+
 
 #### Complaint Agent
 
@@ -252,6 +249,10 @@ Routes requests to one or multiple specialized agents.
 - Complaints
 - Escalation
 - Customer dissatisfaction
+- Resolution
+- Feedback
+
+
 
 #### FAQ Agent
 
@@ -260,6 +261,7 @@ Routes requests to one or multiple specialized agents.
 - Company policies
 - General questions
 - Contact information
+- 
 
 ---
 
@@ -311,7 +313,7 @@ Generate answer
 
 ---
 
-### Module 9 — Analytics Dashboard (Optional)
+### Module 9 — Analytics Dashboard 
 
 **Display**
 
@@ -367,7 +369,7 @@ customer-support-ai/
 
 ## 9. Working Public Datasets
 
-Students are encouraged to use both public datasets and a custom company knowledge base.
+Senior Software developers (assisted by Claude Sonnet) are encouraged to use both public datasets and a custom company knowledge base.
 
 ### A. Consumer Complaint Dataset (Official CFPB)
 
@@ -421,7 +423,7 @@ https://github.com/microsoft/MSMARCO-Question-Answering?utm_source=chatgpt.com
 
 ## 10. Creating the Company Knowledge Base
 
-Students should create a fictional company (e.g., TechMart Electronics) and prepare:
+software developers should create a fictional company (e.g., TechMart Electronics) and prepare:
 
 ```
 knowledge_base/
@@ -515,7 +517,7 @@ This knowledge base is ingested into the vector database and forms the basis for
 
 ## 13. Project Deliverables
 
-Students should submit:
+senior software developers should submit:
 
 - Source code (frontend and backend)
 - Project report (PDF)
@@ -527,7 +529,7 @@ Students should submit:
 
 ---
 
-## 14. Suggested Enhancements (Bonus)
+## 14. Suggested Enhancements (Should Implement)
 
 - Voice-enabled customer support
 - Multilingual conversations
