@@ -1,5 +1,5 @@
 ---
-description: "Use when implementing, building, extending, debugging, or reviewing any part of the Multi-Agent AI Customer Support Assistant. Handles: FastAPI backend, LangGraph agent orchestration, RAG pipeline, FAISS/Pinecone vector store, MongoDB Atlas schema, Next.js frontend, knowledge base ingestion, dataset integration, deployment to Vercel/Railway, and architecture decisions for this project. Pick over default agent for all implementation tasks in this workspace."
+description: "Use when implementing, building, extending, debugging, or reviewing any part of the Multi-Agent AI Customer Support Assistant. Handles: FastAPI backend, LangGraph agent orchestration, RAG pipeline, Pinecone vector store, MongoDB Atlas schema, Next.js frontend, knowledge base ingestion, dataset integration, deployment to Vercel/Railway, and architecture decisions for this project. Pick over default agent for all implementation tasks in this workspace."
 name: "TechMart AI Engineer"
 tools: [read, edit, search, execute, todo, agent]
 model: "Claude Sonnet 4.6 (copilot)"
