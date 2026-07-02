@@ -1,7 +1,14 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut, BarChart2, Settings, MessageSquare, History } from "lucide-react";
+import {
+  LogOut,
+  BarChart2,
+  Settings,
+  MessageSquare,
+  History,
+  Ticket,
+} from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSessions } from "@/hooks/useSessions";
 import type { Session } from "@/types";
@@ -18,9 +25,10 @@ function NavItem({ href, icon, label, active }: NavItemProps) {
     <Link
       href={href}
       className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
-        ${active
-          ? "bg-blue-50 text-blue-700"
-          : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+        ${
+          active
+            ? "bg-blue-50 text-blue-700"
+            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
         }`}
       aria-current={active ? "page" : undefined}
     >
@@ -40,9 +48,10 @@ function SessionItem({ session, active }: SessionItemProps) {
     <Link
       href={`/chat?session=${session.session_id}`}
       className={`block rounded-lg px-3 py-2 text-xs transition-colors truncate
-        ${active
-          ? "bg-blue-50 text-blue-700 font-medium"
-          : "text-slate-600 hover:bg-slate-100"
+        ${
+          active
+            ? "bg-blue-50 text-blue-700 font-medium"
+            : "text-slate-600 hover:bg-slate-100"
         }`}
       title={session.title}
     >
@@ -69,7 +78,9 @@ export function Sidebar() {
         <div className="flex h-7 w-7 items-center justify-center rounded-md bg-blue-600">
           <span className="text-xs font-bold text-white">TM</span>
         </div>
-        <span className="font-semibold text-slate-800 text-sm">TechMart Support</span>
+        <span className="font-semibold text-slate-800 text-sm">
+          TechMart Support
+        </span>
       </div>
 
       {/* Navigation */}
@@ -85,6 +96,12 @@ export function Sidebar() {
           icon={<History className="h-4 w-4" />}
           label="History"
           active={pathname === "/history"}
+        />
+        <NavItem
+          href="/tickets"
+          icon={<Ticket className="h-4 w-4" />}
+          label="Tickets"
+          active={pathname === "/tickets"}
         />
         <NavItem
           href="/analytics"
