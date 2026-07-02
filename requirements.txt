@@ -23,6 +23,7 @@ sentence-transformers==3.0.1
 
 # Vector Store
 faiss-cpu==1.8.0
+pinecone-client==3.2.2        # Production vector store (Pinecone v3)
 
 # RAG / Document processing
 pypdf==4.2.0
@@ -35,6 +36,8 @@ pandas==2.2.2
 httpx==0.27.0
 aiosmtplib==3.0.1            # Async email for password reset
 fpdf2==2.7.9                 # Knowledge base PDF generation script
+slowapi==0.1.9               # Rate limiting
+datasets==2.20.0             # HuggingFace datasets (Banking77 etc.)
 
 # Testing
 pytest==8.2.2

@@ -150,3 +150,71 @@ async def update_ticket(
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Ticket not found")
     return {"message": f"Ticket {ticket_id} updated"}
+
+
+# ── EN-05: Human-Agent Handoff ────────────────────────────────────────────────
+
+class HandoffRequest(BaseModel):
+    session_id: str
+    reason: Optional[str] = "Customer requested human agent"
+
+
+@router.post("/handoff", status_code=201)
+async def request_human_handoff(
+    body: HandoffRequest,
+    user: dict = Depends(get_current_user),
+):
+    """
+    EN-05: Flag a conversation for human agent takeover.
+    Creates a high-priority ticket and marks the session as requiring human review.
+    """
+    db = get_db()
+    user_id = str(user["_id"])
+
+    session = await db.sessions.find_one({"session_id": body.session_id})
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    ticket_id = _generate_ticket_id()
+    ticket = {
+        "ticket_id": ticket_id,
+        "session_id": body.session_id,
+        "user_id": user_id,
+        "user_name": user.get("name"),
+        "user_email": user.get("email"),
+        "subject": f"Human agent requested — {body.reason}",
+        "description": body.reason or "",
+        "status": "open",
+        "priority": "high",
+        "handoff": True,
+        "assigned_agent": None,
+        "created_at": datetime.utcnow(),
+        "updated_at": datetime.utcnow(),
+        "resolved_at": None,
+    }
+    await db.tickets.insert_one(ticket)
+
+    # Mark session as requiring human review
+    await db.sessions.update_one(
+        {"session_id": body.session_id},
+        {"$set": {"requires_human": True, "ticket_id": ticket_id}},
+    )
+
+    # Notify via email
+    try:
+        from backend.services.email import send_ticket_confirmation_email
+        await send_ticket_confirmation_email(
+            user.get("email", ""),
+            ticket_id,
+            f"Human agent requested — {body.reason}",
+        )
+    except Exception:
+        pass
+
+    return {
+        "ticket_id": ticket_id,
+        "message": "A human agent will contact you within 1 hour. "
+                   f"Your reference number is {ticket_id}.",
+        "status": "open",
+        "priority": "high",
+    }

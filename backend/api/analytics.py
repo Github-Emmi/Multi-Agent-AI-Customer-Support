@@ -98,3 +98,55 @@ async def submit_feedback(
         },
     )
     return {"message": "Feedback recorded. Thank you!"}
+
+
+# ── EN-09: Satisfaction Analytics ────────────────────────────────────────────
+
+@router.get("/satisfaction")
+async def get_satisfaction_distribution(user: dict = Depends(get_current_user)):
+    """Return satisfaction rating distribution (count per 1-5 star rating)."""
+    db = get_db()
+    user_id = str(user["_id"])
+    pipeline = [
+        {"$match": {"user_id": user_id, "satisfaction_rating": {"$exists": True}}},
+        {"$group": {"_id": "$satisfaction_rating", "count": {"$sum": 1}}},
+        {"$sort": {"_id": 1}},
+    ]
+    results = await db.analytics.aggregate(pipeline).to_list(5)
+    dist = {str(i): 0 for i in range(1, 6)}
+    for r in results:
+        dist[str(r["_id"])] = r["count"]
+    return {"distribution": dist}
+
+
+@router.get("/tickets")
+async def get_ticket_analytics(user: dict = Depends(get_current_user)):
+    """Return ticket volume by status and resolution time stats."""
+    db = get_db()
+    user_id = str(user["_id"])
+    pipeline = [
+        {"$match": {"user_id": user_id}},
+        {"$group": {"_id": "$status", "count": {"$sum": 1}}},
+    ]
+    results = await db.tickets.aggregate(pipeline).to_list(10)
+    by_status = {r["_id"]: r["count"] for r in results}
+    total = sum(by_status.values())
+    return {"total": total, "by_status": by_status}
+
+
+@router.get("/sentiment")
+async def get_sentiment_trends(user: dict = Depends(get_current_user)):
+    """Return average sentiment score over the last 7 days."""
+    db = get_db()
+    user_id = str(user["_id"])
+    cutoff = (datetime.utcnow() - timedelta(days=7)).strftime("%Y-%m-%d")
+    pipeline = [
+        {"$match": {"user_id": user_id, "date": {"$gte": cutoff},
+                    "sentiment_score": {"$exists": True}}},
+        {"$group": {"_id": "$date", "avg_sentiment": {"$avg": "$sentiment_score"},
+                    "count": {"$sum": 1}}},
+        {"$sort": {"_id": 1}},
+    ]
+    results = await db.analytics.aggregate(pipeline).to_list(7)
+    return [{"date": r["_id"], "avg_sentiment": round(r["avg_sentiment"], 2),
+             "count": r["count"]} for r in results]

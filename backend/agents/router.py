@@ -1,10 +1,11 @@
 """
 Agent Router — LangGraph Orchestrator
-Detects intent and dispatches to specialized agents.
+Detects intent, sentiment, and language; dispatches to specialized agents.
 """
 import json
+import logging
 import time
-from typing import List, Annotated
+from typing import List, Annotated, Optional
 import operator
 from typing_extensions import TypedDict
 
@@ -17,6 +18,8 @@ from backend.agents.technical import technical_node
 from backend.agents.product import product_node
 from backend.agents.complaint import complaint_node
 from backend.agents.faq import faq_node
+
+logger = logging.getLogger("techmart.router")
 
 INTENT_LABELS = ["billing", "technical", "product", "complaint", "faq"]
 
@@ -40,6 +43,9 @@ class AgentState(TypedDict):
     conversation_history: List[dict]
     intents: List[str]
     sentiment_score: int
+    sentiment_label: str
+    language_code: str
+    language_instruction: str
     retrieved_contexts: dict
     agent_responses: Annotated[List[dict], operator.add]
     final_response: str
@@ -49,10 +55,11 @@ class AgentState(TypedDict):
 
 def get_llm():
     return ChatOpenAI(
-        base_url="https://openrouter.ai/api/v1",
+        base_url=settings.OPENAI_BASE_URL,
         api_key=settings.OPENROUTER_API_KEY,
-        model="meta-llama/llama-3-8b-instruct:free",
-        temperature=0.1,
+        model=settings.OPENAI_MODEL,
+        temperature=settings.OPENAI_TEMPERATURE,
+        max_tokens=settings.OPENAI_MAX_TOKENS,
     )
 
 
@@ -163,6 +170,9 @@ async def run_agents(
         conversation_history=conversation_history,
         intents=[],
         sentiment_score=1,
+        sentiment_label="neutral",
+        language_code="en",
+        language_instruction="",
         retrieved_contexts={},
         agent_responses=[],
         final_response="",
@@ -171,4 +181,10 @@ async def run_agents(
     )
     result = await agent_graph.ainvoke(state)
     result["response_time_ms"] = int((time.time() - start) * 1000)
+    logger.info(
+        f"[{session_id}] agents={result.get('agents_used')} "
+        f"sentiment={result.get('sentiment_score')} "
+        f"lang={result.get('language_code')} "
+        f"time={result['response_time_ms']}ms"
+    )
     return result

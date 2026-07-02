@@ -137,3 +137,55 @@ async def delete_document(
     retriever.reload()
 
     return {"message": f"{safe_name} deleted and index updated"}
+
+
+# ── EN-08: Admin Ticket Management ───────────────────────────────────────────
+
+@router.get("/tickets")
+async def list_all_tickets(
+    status: str = None,
+    priority: str = None,
+    limit: int = 50,
+    admin: dict = Depends(require_admin),
+):
+    """List all tickets with optional status/priority filter."""
+    db = get_db()
+    query = {}
+    if status:
+        query["status"] = status
+    if priority:
+        query["priority"] = priority
+
+    tickets = await db.tickets.find(query).sort(
+        "created_at", -1
+    ).limit(limit).to_list(limit)
+
+    return [
+        {
+            "ticket_id": t["ticket_id"],
+            "user_name": t.get("user_name"),
+            "user_email": t.get("user_email"),
+            "subject": t["subject"],
+            "status": t["status"],
+            "priority": t["priority"],
+            "handoff": t.get("handoff", False),
+            "assigned_agent": t.get("assigned_agent"),
+            "created_at": t["created_at"],
+        }
+        for t in tickets
+    ]
+
+
+@router.get("/tickets/stats")
+async def ticket_stats(admin: dict = Depends(require_admin)):
+    """Summary of ticket counts by status."""
+    db = get_db()
+    pipeline = [
+        {"$group": {"_id": "$status", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+    ]
+    results = await db.analytics.tickets.aggregate(pipeline).to_list(10)
+    # Use tickets collection directly
+    pipeline2 = [{"$group": {"_id": "$status", "count": {"$sum": 1}}}]
+    results2 = await db.tickets.aggregate(pipeline2).to_list(10)
+    return {"by_status": {r["_id"]: r["count"] for r in results2}}

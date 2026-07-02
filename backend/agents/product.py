@@ -28,10 +28,11 @@ def product_node(state: dict) -> dict:
     state["retrieved_contexts"]["product"] = chunks
 
     llm = ChatOpenAI(
-        base_url="https://openrouter.ai/api/v1",
+        base_url=settings.OPENAI_BASE_URL,
         api_key=settings.OPENROUTER_API_KEY,
-        model="meta-llama/llama-3-8b-instruct:free",
-        temperature=0.2,
+        model=settings.OPENAI_MODEL,
+        temperature=settings.OPENAI_TEMPERATURE,
+        max_tokens=settings.OPENAI_MAX_TOKENS,
     )
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT.format(context=context, history=history)},
