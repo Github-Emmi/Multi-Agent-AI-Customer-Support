@@ -46,6 +46,9 @@ class Settings(BaseSettings):
     # ── Logging ───────────────────────────────────────────────────────────────
     LOG_LEVEL: str = "INFO"
 
+    # ── Webhooks ──────────────────────────────────────────────────────────────
+    WHATSAPP_VERIFY_TOKEN: str = "techmart_verify_token_2026"
+
     @property
     def cors_origins_list(self) -> List[str]:
         return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
