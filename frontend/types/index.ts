@@ -107,6 +107,77 @@ export interface KBDocument {
   last_indexed_at?: string;
 }
 
+// ── Tickets ───────────────────────────────────────────────────────────────────
+
+export type TicketStatus = "open" | "in_progress" | "resolved" | "closed";
+export type TicketPriority = "low" | "medium" | "high" | "urgent";
+
+export interface Ticket {
+  ticket_id: string;
+  session_id: string;
+  user_id: string;
+  subject: string;
+  description?: string;
+  status: TicketStatus;
+  priority: TicketPriority;
+  handoff?: boolean;
+  assigned_agent?: string | null;
+  created_at: string;
+  updated_at?: string;
+  resolved_at?: string | null;
+}
+
+export interface CreateTicketPayload {
+  session_id: string;
+  subject: string;
+  description?: string;
+  priority?: TicketPriority;
+}
+
+export interface HandoffPayload {
+  session_id: string;
+  reason?: string;
+}
+
+// ── Voice ─────────────────────────────────────────────────────────────────────
+
+export interface VoiceResponse {
+  transcription: string;
+  response: string;
+  agents_used: string[];
+  session_id: string;
+  response_time_ms: number;
+}
+
+// ── Conversation Summary ──────────────────────────────────────────────────────
+
+export interface ConversationSummary {
+  session_id: string;
+  summary_text: string;
+  issue?: string;
+  agents?: string[];
+  resolution?: string;
+  sentiment?: string;
+  action_required?: boolean;
+}
+
+// ── Extended Analytics ────────────────────────────────────────────────────────
+
+export interface SatisfactionDistribution {
+  distribution: Record<string, number>;
+}
+
+export interface SentimentTrend {
+  date: string;
+  avg_sentiment: number;
+  count: number;
+}
+
+export interface TicketStats {
+  total: number;
+  by_status: Record<string, number>;
+}
+
 // ── Agent ─────────────────────────────────────────────────────────────────────
 
 export type AgentName = "billing" | "technical" | "product" | "complaint" | "faq";

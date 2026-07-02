@@ -7,9 +7,10 @@ interface MessageInputProps {
   onSend: (text: string) => void;
   isLoading: boolean;
   disabled?: boolean;
+  className?: string;
 }
 
-export function MessageInput({ onSend, isLoading, disabled }: MessageInputProps) {
+export function MessageInput({ onSend, isLoading, disabled, className = "" }: MessageInputProps) {
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 

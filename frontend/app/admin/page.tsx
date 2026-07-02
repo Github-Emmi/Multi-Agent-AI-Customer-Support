@@ -1,9 +1,10 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { RefreshCw, Database } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import toast from "react-hot-toast";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { Header } from "@/components/layout/Header";
 import { Spinner } from "@/components/ui/Spinner";
 import { Button } from "@/components/ui/Button";
 import { FileUpload } from "@/components/admin/FileUpload";
@@ -47,19 +48,16 @@ function AdminContent() {
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
       <main className="flex flex-1 flex-col overflow-hidden bg-slate-50">
-        {/* Header */}
-        <div className="flex h-14 items-center border-b border-slate-100 bg-white px-5">
-          <div className="flex items-center gap-2">
-            <Database className="h-4 w-4 text-slate-500" aria-hidden="true" />
-            <h1 className="text-sm font-semibold text-slate-700">Knowledge Base Admin</h1>
-          </div>
+        <Header title="Knowledge Base Admin" />
+
+        {/* Re-index toolbar */}
+        <div className="flex h-10 items-center justify-end border-b border-slate-100 bg-white px-5">
           <Button
             variant="secondary"
             size="sm"
             onClick={handleReindex}
             isLoading={isReindexing}
             leftIcon={<RefreshCw className="h-3.5 w-3.5" />}
-            className="ml-auto"
           >
             Re-index All
           </Button>

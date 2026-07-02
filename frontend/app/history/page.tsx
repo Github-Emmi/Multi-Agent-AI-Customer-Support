@@ -5,6 +5,7 @@ import { MessageSquare, ChevronRight, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { Header } from "@/components/layout/Header";
 import { Spinner } from "@/components/ui/Spinner";
 import { Button } from "@/components/ui/Button";
 import { useSessions } from "@/hooks/useSessions";
@@ -28,9 +29,7 @@ function HistoryContent() {
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
       <main className="flex flex-1 flex-col overflow-hidden bg-slate-50">
-        <div className="flex h-14 items-center border-b border-slate-100 bg-white px-5">
-          <h1 className="text-sm font-semibold text-slate-700">Conversation History</h1>
-        </div>
+        <Header title="Conversation History" />
 
         <div className="flex-1 overflow-y-auto p-5">
           {isLoading ? (
