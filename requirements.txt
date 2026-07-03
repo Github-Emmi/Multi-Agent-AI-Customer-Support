@@ -5,6 +5,7 @@ uvicorn[standard]==0.30.1
 # Database
 motor==3.4.0                  # Async MongoDB driver
 pymongo==4.7.3
+certifi                       # SSL certificate bundle (macOS/pyenv fix)
 
 # Auth
 python-jose[cryptography]==3.3.0

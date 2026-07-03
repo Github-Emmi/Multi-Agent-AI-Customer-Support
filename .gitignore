@@ -12,3 +12,6 @@ vectorstore/
 frontend/node_modules/
 frontend/.next/
 frontend/tsconfig.tsbuildinfo
+datasets/
+.coverage
+htmlcov/

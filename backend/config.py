@@ -49,6 +49,10 @@ class Settings(BaseSettings):
     # ── Webhooks ──────────────────────────────────────────────────────────────
     WHATSAPP_VERIFY_TOKEN: str = "techmart_verify_token_2026"
 
+    # ── Vector Store selector ─────────────────────────────────────────────────
+    # Set VECTOR_STORE=pinecone in .env.production for cloud deployment
+    VECTOR_STORE: str = "faiss"  # "faiss" | "pinecone"
+
     @property
     def cors_origins_list(self) -> List[str]:
         return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
