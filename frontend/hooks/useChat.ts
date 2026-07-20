@@ -7,7 +7,7 @@ import type { Message, ChatResponse } from "@/types";
 
 export function useChat(initialSessionId?: string) {
   const [sessionId, setSessionId] = useState<string>(
-    initialSessionId ?? `sess_${uuidv4().replace(/-/g, "").slice(0, 12)}`
+    initialSessionId ?? `sess_${uuidv4().replace(/-/g, "").slice(0, 12)}`,
   );
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -41,6 +41,8 @@ export function useChat(initialSessionId?: string) {
           message: text,
         });
 
+        console.log("Received data from /chat:", data);
+
         const assistantMsg: Message = {
           role: "assistant",
           content: data.response,
@@ -57,7 +59,7 @@ export function useChat(initialSessionId?: string) {
         setIsLoading(false);
       }
     },
-    [sessionId]
+    [sessionId],
   );
 
   const resetSession = useCallback(() => {
@@ -66,5 +68,20 @@ export function useChat(initialSessionId?: string) {
     setMessages([]);
   }, []);
 
-  return { messages, sendMessage, isLoading, sessionId, resetSession };
+  // Append pre-built messages directly to the feed WITHOUT calling /chat.
+  // Used by the voice flow: /voice/transcribe already ran the full agent
+  // pipeline and persisted both turns server-side, so we must not re-run it.
+  const appendMessages = useCallback((...msgs: Message[]) => {
+    if (msgs.length === 0) return;
+    setMessages((prev) => [...prev, ...msgs]);
+  }, []);
+
+  return {
+    messages,
+    sendMessage,
+    appendMessages,
+    isLoading,
+    sessionId,
+    resetSession,
+  };
 }

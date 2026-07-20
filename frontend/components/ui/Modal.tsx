@@ -1,68 +1,61 @@
-import React, { useEffect } from "react";
+"use client";
+
 import { X } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "./Button";
+import type { ComponentProps } from "react";
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onConfirm?: () => void;
   title: string;
   children: React.ReactNode;
-  size?: "sm" | "md" | "lg";
+  confirmText?: string;
+  confirmVariant?: ComponentProps<typeof Button>["variant"];
 }
-
-const sizeClasses = { sm: "max-w-sm", md: "max-w-md", lg: "max-w-lg" };
 
 export function Modal({
   isOpen,
   onClose,
+  onConfirm,
   title,
   children,
-  size = "md",
+  confirmText = "Confirm",
+  confirmVariant = "primary",
 }: ModalProps) {
-  // Close on Escape key
-  useEffect(() => {
-    if (!isOpen) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
-  }, [isOpen, onClose]);
-
   if (!isOpen) return null;
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+      aria-labelledby="modal-title"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="modal-title"
     >
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-      {/* Panel */}
-      <div
-        className={`relative z-10 w-full ${sizeClasses[size]} rounded-xl bg-white shadow-xl`}
-      >
-        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-          <h2 id="modal-title" className="text-base font-semibold text-slate-900">
+      <div className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+        <div className="flex items-start justify-between">
+          <h2 id="modal-title" className="text-lg font-semibold text-slate-800">
             {title}
           </h2>
-          <Button
-            variant="ghost"
-            size="sm"
+          <button
             onClick={onClose}
+            className="p-1 text-slate-400 hover:text-slate-600"
             aria-label="Close modal"
-            className="p-1"
           >
-            <X className="h-4 w-4" />
-          </Button>
+            <X className="h-5 w-5" />
+          </button>
         </div>
-        <div className="px-5 py-4">{children}</div>
+        <div className="mt-4 text-sm text-slate-600">{children}</div>
+        <div className="mt-6 flex justify-end gap-3">
+          <Button variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          {onConfirm && (
+            <Button variant={confirmVariant} onClick={onConfirm}>
+              {confirmText}
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );

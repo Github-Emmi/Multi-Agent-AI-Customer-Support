@@ -32,7 +32,7 @@ async def append_turn(
     if agents_used:
         turn["agents_used"] = agents_used
     if response_time_ms is not None:
-        turn["response_time_ms"] = response_time_ms
+        turn["response_time_ms"] = response_time_ms  
 
     await db.conversations.update_one(
         {"session_id": session_id},
@@ -51,7 +51,7 @@ async def get_history(session_id: str, last_n: int = 10) -> List[dict]:
     if not doc:
         return []
     return doc["turns"][-last_n:]
-
+ 
 
 async def get_user_sessions(user_id: str, limit: int = 20) -> List[dict]:
     db = get_db()

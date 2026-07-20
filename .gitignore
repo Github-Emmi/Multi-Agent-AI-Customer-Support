@@ -15,3 +15,10 @@ frontend/tsconfig.tsbuildinfo
 datasets/
 .coverage
 htmlcov/
+
+# Kaggle Factory artifacts (build outputs, not source) — keep the README/dir marker
+backend/models/intent_classifier/*
+!backend/models/intent_classifier/README.md
+kaggle.json
+kernel-metadata.json
+

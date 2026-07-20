@@ -25,7 +25,6 @@ def product_node(state: dict) -> dict:
 
     chunks = retriever.search(query, top_k=4)
     context = "\n\n".join([c["text"] for c in chunks]) or "No relevant documents found."
-    state["retrieved_contexts"]["product"] = chunks
 
     llm = ChatOpenAI(
         base_url=settings.OPENAI_BASE_URL,
@@ -39,5 +38,7 @@ def product_node(state: dict) -> dict:
         {"role": "user", "content": query},
     ]
     response = llm.invoke(messages).content.strip()
-    state["agent_responses"].append({"agent": "product", "response": response})
-    return state
+    return {
+        "agent_responses": [{"agent": "product", "response": response}],
+        "retrieved_contexts": {"product": chunks},
+    }

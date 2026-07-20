@@ -95,7 +95,13 @@ function TicketsContent() {
         </div>
       </main>
 
-      <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="Create Support Ticket">
+      <Modal
+        isOpen={showCreate}
+        onClose={() => setShowCreate(false)}
+        onConfirm={handleCreate}
+        title="Create Support Ticket"
+        confirmText="Create Ticket"
+      >
         <div className="flex flex-col gap-3">
           <Input
             label="Subject"
@@ -134,10 +140,6 @@ function TicketsContent() {
               </select>
             </div>
           )}
-          <div className="flex justify-end gap-2 mt-2">
-            <Button variant="secondary" size="sm" onClick={() => setShowCreate(false)}>Cancel</Button>
-            <Button size="sm" onClick={handleCreate}>Create Ticket</Button>
-          </div>
         </div>
       </Modal>
     </div>

@@ -38,7 +38,13 @@ export function HandoffButton({ sessionId }: HandoffButtonProps) {
         Human agent
       </button>
 
-      <Modal isOpen={open} onClose={() => setOpen(false)} title="Request Human Agent" size="sm">
+      <Modal
+        isOpen={open}
+        onClose={() => setOpen(false)}
+        onConfirm={handleSubmit}
+        title="Request Human Agent"
+        confirmText="Request Agent"
+      >
         <p className="mb-3 text-sm text-slate-600">
           A TechMart agent will contact you within 1 hour.
         </p>
@@ -48,14 +54,6 @@ export function HandoffButton({ sessionId }: HandoffButtonProps) {
           value={reason}
           onChange={(e) => setReason(e.target.value)}
         />
-        <div className="mt-4 flex justify-end gap-2">
-          <Button variant="secondary" size="sm" onClick={() => setOpen(false)}>
-            Cancel
-          </Button>
-          <Button size="sm" isLoading={loading} onClick={handleSubmit}>
-            Request Agent
-          </Button>
-        </div>
       </Modal>
     </>
   );

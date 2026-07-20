@@ -7,9 +7,28 @@ class Settings(BaseSettings):
     # ── LLM ──────────────────────────────────────────────────────────────────
     OPENROUTER_API_KEY: str = ""
     OPENAI_BASE_URL: str = "https://openrouter.ai/api/v1"
-    OPENAI_MODEL: str = "meta-llama/llama-3.3-70b-instruct:free"
+    OPENAI_MODEL: str = "openrouter/free"
     OPENAI_MAX_TOKENS: int = 1024
     OPENAI_TEMPERATURE: float = 0.3
+
+    # ── Intent Routing (Kaggle Factory) ───────────────────────────────────────
+    # "local" → fast, free, fine-tuned classifier (no LLM call for routing).
+    # "llm"   → fall back to the original LLM-based intent detection.
+    # In "local" mode the app still falls back to the LLM automatically if the
+    # local classifier artifact is missing or fails to load.
+    ROUTING_MODE: str = "local"  # "local" | "llm"
+    INTENT_MODEL_PATH: str = "backend/models/intent_classifier"
+    INTENT_CONFIDENCE_THRESHOLD: float = 0.4
+
+    # ── Embeddings ─────────────────────────────────────────────────────────────
+    # Pin to CPU: avoids the Apple-Silicon MPS shutdown segfault and keeps
+    # single-query embedding fast and deterministic in production.
+    EMBEDDING_DEVICE: str = "cpu"
+
+    # ── Ingestion pipeline ─────────────────────────────────────────────────────
+    # Heavy offline work belongs in the Kaggle Factory; production loads the
+    # pre-built artifact instead. Set true only to force a local rebuild in prod.
+    ENABLE_INGESTION: bool = False
 
     # ── Database ──────────────────────────────────────────────────────────────
     MONGODB_URI: str = "mongodb://localhost:27017/customer_support"

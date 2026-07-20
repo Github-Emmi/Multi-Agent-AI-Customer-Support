@@ -16,20 +16,41 @@ import type { VoiceResponse } from "@/types";
 function ChatPageContent() {
   const searchParams = useSearchParams();
   const sessionParam = searchParams?.get("session") ?? undefined;
-  const { messages, sendMessage, isLoading, sessionId, resetSession } =
+  const { messages, sendMessage, appendMessages, isLoading, sessionId, resetSession } =
     useChat(sessionParam);
 
+  // As soon as the browser transcribes speech, show the user's message.
+  const handleTranscription = useCallback(
+    (text: string) => {
+      appendMessages({
+        role: "user",
+        content: text,
+        timestamp: new Date().toISOString(),
+      });
+    },
+    [appendMessages]
+  );
+
+  // The /voice/transcribe endpoint already executed the full agent pipeline
+  // and persisted both turns. Append ONLY the assistant reply — do NOT call
+  // /chat again (that would double-run the pipeline and drop this response).
   const handleVoiceResponse = useCallback(
     (r: VoiceResponse) => {
-      // Voice already persisted server-side — append locally for instant display
-      sendMessage(r.transcription);
+      appendMessages({
+        role: "assistant",
+        content: r.response,
+        agents_used: r.agents_used,
+        response_time_ms: r.response_time_ms,
+        timestamp: new Date().toISOString(),
+      });
     },
-    [sendMessage]
+    [appendMessages]
   );
 
   const { recordingState, startRecording, stopRecording } = useVoice(
     sessionId,
-    handleVoiceResponse
+    handleVoiceResponse,
+    handleTranscription
   );
 
   const hasMessages = messages.length > 0;

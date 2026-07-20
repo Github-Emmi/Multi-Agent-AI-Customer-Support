@@ -3,6 +3,8 @@ conftest.py — Shared pytest fixtures for all backend tests.
 Uses AsyncMock and mongomock-motor for DB isolation.
 """
 import asyncio
+import os
+import sys
 import pytest
 import pytest_asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -10,6 +12,22 @@ from httpx import AsyncClient, ASGITransport
 
 from backend.main import app
 from backend.database import mongo as mongo_module
+
+
+# ── Clean exit workaround ──────────────────────────────────────────────────────
+# PyTorch/FAISS can segfault (exit 139) during interpreter shutdown on Apple
+# Silicon — see documentations/13_KAGGLE_FACTORY_PATTERN.md, diagnosis #3. The
+# tests themselves pass; only the native atexit destructors crash. We hard-exit
+# with the real status AFTER pytest (and coverage) have finished so the crash
+# cannot mask a green run. Runs last (trylast) so coverage still writes its data.
+@pytest.hookimpl(trylast=True)
+def pytest_sessionfinish(session, exitstatus):
+    # Only short-circuit a clean run — on failures/errors let pytest exit
+    # normally so full tracebacks are still printed.
+    if int(exitstatus) == 0:
+        sys.stdout.flush()
+        sys.stderr.flush()
+        os._exit(0)
 
 
 # ── Event loop ────────────────────────────────────────────────────────────────

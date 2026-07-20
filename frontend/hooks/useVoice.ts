@@ -6,56 +6,83 @@ import type { VoiceResponse } from "@/types";
 
 export type RecordingState = "idle" | "recording" | "processing";
 
-export function useVoice(sessionId: string, onResponse: (r: VoiceResponse) => void) {
+export function useVoice(
+  sessionId: string,
+  onResponse: (r: VoiceResponse) => void,
+  onTranscriptionSuccess?: (text: string) => void
+) {
   const [recordingState, setRecordingState] = useState<RecordingState>("idle");
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
+  const recognitionRef = useRef<any>(null);
 
-  const startRecording = useCallback(async () => {
-    if (!navigator.mediaDevices?.getUserMedia) {
-      toast.error("Microphone not supported in this browser");
+  const startRecording = useCallback(() => {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      toast.error("Speech recognition is not supported in this browser. Please use Chrome or Safari.");
       return;
     }
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
-      chunksRef.current = [];
+      setRecordingState("recording");
+      const recognition = new SpeechRecognition();
 
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunksRef.current.push(e.data);
-      };
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = "en-US";
 
-      recorder.onstop = async () => {
-        stream.getTracks().forEach((t) => t.stop());
-        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+      recognition.onresult = async (event: any) => {
+        const transcriptText = event.results[0]?.[0]?.transcript;
+        if (!transcriptText) return;
+
+        // Optimistically render spoken text inside the UI chat feed right away
+        if (onTranscriptionSuccess) {
+          onTranscriptionSuccess(transcriptText);
+        }
+
         setRecordingState("processing");
+
         try {
-          const formData = new FormData();
-          formData.append("audio", blob, "recording.webm");
+          // Send text string payload directly to backend API
           const { data } = await api.post<VoiceResponse>(
             `/voice/transcribe?session_id=${sessionId}`,
-            formData,
-            { headers: { "Content-Type": "multipart/form-data" } }
+            { text: transcriptText },
+            { headers: { "Content-Type": "application/json" } }
           );
           onResponse(data);
-        } catch {
-          toast.error("Voice transcription failed. Please try typing.");
+        } catch (error) {
+          toast.error("Voice pipeline error. Please try typing.");
         } finally {
           setRecordingState("idle");
         }
       };
 
-      recorder.start();
-      mediaRecorderRef.current = recorder;
-      setRecordingState("recording");
-    } catch {
-      toast.error("Microphone access denied");
+      recognition.onerror = (event: any) => {
+        console.error("Speech Recognition Error:", event.error);
+        if (event.error === "not-allowed") {
+          toast.error("Microphone access blocked by browser settings.");
+        } else {
+          toast.error("Audio detection issue. Please speak again.");
+        }
+        setRecordingState("idle");
+      };
+
+      recognition.onend = () => {
+        setRecordingState("idle");
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (error) {
+      console.error("Failed to initialize speech engine:", error);
+      toast.error("Failed to start voice capture.");
+      setRecordingState("idle");
     }
-  }, [sessionId, onResponse]);
+  }, [sessionId, onResponse, onTranscriptionSuccess]);
 
   const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current?.state === "recording") {
-      mediaRecorderRef.current.stop();
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
     }
   }, []);
 

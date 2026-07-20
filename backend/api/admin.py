@@ -180,12 +180,6 @@ async def list_all_tickets(
 async def ticket_stats(admin: dict = Depends(require_admin)):
     """Summary of ticket counts by status."""
     db = get_db()
-    pipeline = [
-        {"$group": {"_id": "$status", "count": {"$sum": 1}}},
-        {"$sort": {"count": -1}},
-    ]
-    results = await db.analytics.tickets.aggregate(pipeline).to_list(10)
-    # Use tickets collection directly
-    pipeline2 = [{"$group": {"_id": "$status", "count": {"$sum": 1}}}]
-    results2 = await db.tickets.aggregate(pipeline2).to_list(10)
-    return {"by_status": {r["_id"]: r["count"] for r in results2}}
+    pipeline = [{"$group": {"_id": "$status", "count": {"$sum": 1}}}]
+    results = await db.tickets.aggregate(pipeline).to_list(10)
+    return {"by_status": {r["_id"]: r["count"] for r in results}}

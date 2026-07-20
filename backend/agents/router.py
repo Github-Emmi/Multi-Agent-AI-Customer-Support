@@ -18,6 +18,10 @@ from backend.agents.technical import technical_node
 from backend.agents.product import product_node
 from backend.agents.complaint import complaint_node
 from backend.agents.faq import faq_node
+from backend.agents.intent_classifier import (
+    intent_classifier,
+    local_frustration_score,
+)
 
 logger = logging.getLogger("techmart.router")
 
@@ -37,6 +41,16 @@ SENTIMENT_PROMPT = """Rate the frustration level of this customer message on a s
 Message: {query}"""
 
 
+def _merge_contexts(a: dict, b: dict) -> dict:
+    """Reducer that merges retrieved-context dicts from parallel agent nodes.
+
+    Without a reducer, two agents running in parallel would both write the
+    (non-reducer) retrieved_contexts channel in the same step and LangGraph
+    would raise InvalidUpdateError.
+    """
+    return {**(a or {}), **(b or {})}
+
+
 class AgentState(TypedDict):
     query: str
     session_id: str
@@ -46,7 +60,7 @@ class AgentState(TypedDict):
     sentiment_label: str
     language_code: str
     language_instruction: str
-    retrieved_contexts: dict
+    retrieved_contexts: Annotated[dict, _merge_contexts]
     agent_responses: Annotated[List[dict], operator.add]
     final_response: str
     agents_used: List[str]
@@ -63,43 +77,71 @@ def get_llm():
     )
 
 
-def detect_intent(state: AgentState) -> AgentState:
-    llm = get_llm()
-    prompt = INTENT_PROMPT.format(
-        labels=INTENT_LABELS,
-        query=state["query"],
+def _use_local_router() -> bool:
+    """Local routing is used only when enabled AND the artifact is loaded."""
+    return (
+        settings.ROUTING_MODE == "local"
+        and intent_classifier is not None
+        and intent_classifier.available
     )
-    response = llm.invoke(prompt).content.strip()
-    try:
-        intents = json.loads(response)
-        intents = [i for i in intents if i in INTENT_LABELS]
-    except (json.JSONDecodeError, TypeError):
-        intents = ["faq"]
+
+
+def detect_intent(state: AgentState) -> AgentState:
+    query = state["query"]
+
+    if _use_local_router():
+        # ── Fast, free, local path (Kaggle Factory) — no LLM calls ──────────
+        intents = intent_classifier.classify(query)
+        score = local_frustration_score(query)
+    else:
+        # ── Fallback: original, more expensive LLM-based detection ──────────
+        llm = get_llm()
+        prompt = INTENT_PROMPT.format(labels=INTENT_LABELS, query=query)
+        response = llm.invoke(prompt).content.strip()
+        try:
+            parsed = json.loads(response)
+            intents = [i for i in parsed if i in INTENT_LABELS]
+        except (json.JSONDecodeError, TypeError):
+            intents = ["faq"]
+
+        sentiment_resp = llm.invoke(
+            SENTIMENT_PROMPT.format(query=query)
+        ).content.strip()
+        try:
+            score = int(sentiment_resp[0])
+        except (ValueError, IndexError):
+            score = 2
+
+    # De-duplicate while preserving order — a repeated intent would otherwise
+    # invoke the same agent twice, doubling LLM cost and latency.
+    intents = list(dict.fromkeys(intents))
     state["intents"] = intents if intents else ["faq"]
 
-    # Sentiment check — add complaint agent for high frustration
-    sentiment_resp = llm.invoke(
-        SENTIMENT_PROMPT.format(query=state["query"])
-    ).content.strip()
-    try:
-        score = int(sentiment_resp[0])
-    except (ValueError, IndexError):
-        score = 2
+    # Add complaint agent for high frustration (both routing modes)
     state["sentiment_score"] = score
     if score >= 4 and "complaint" not in state["intents"]:
         state["intents"].append("complaint")
 
-    state["retrieved_contexts"] = {}
-    state["agent_responses"] = []
     return state
 
 
 def route_to_agents(state: AgentState) -> List[str]:
-    return state["intents"]
+    # Deduplicate defensively: a repeated intent would make LangGraph fan out to
+    # the same agent node twice in one step, which raises InvalidUpdateError.
+    return list(dict.fromkeys(state["intents"]))
 
 
 def aggregate_responses(state: AgentState) -> AgentState:
-    responses = state["agent_responses"]
+    # Defensive de-duplication by agent — intents are already deduped upstream,
+    # but this guarantees a single response per agent no matter how the graph
+    # accumulated them (prevents the doubled-response bug).
+    seen = set()
+    responses = []
+    for r in state["agent_responses"]:
+        if r["agent"] not in seen:
+            seen.add(r["agent"])
+            responses.append(r)
+
     if not responses:
         state["final_response"] = (
             "I'm sorry, I wasn't able to process your request. "

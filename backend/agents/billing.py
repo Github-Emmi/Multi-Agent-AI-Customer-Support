@@ -25,7 +25,6 @@ def billing_node(state: dict) -> dict:
 
     chunks = retriever.search(query, top_k=4)
     context = "\n\n".join([c["text"] for c in chunks]) or "No relevant documents found."
-    state["retrieved_contexts"]["billing"] = chunks
 
     llm = ChatOpenAI(
         base_url=settings.OPENAI_BASE_URL,
@@ -39,5 +38,9 @@ def billing_node(state: dict) -> dict:
         {"role": "user", "content": query},
     ]
     response = llm.invoke(messages).content.strip()
-    state["agent_responses"].append({"agent": "billing", "response": response})
-    return state
+    # Return only the delta — LangGraph's reducers merge it exactly once.
+    # Mutating + returning shared state on a reduced channel risks double-counting.
+    return {
+        "agent_responses": [{"agent": "billing", "response": response}],
+        "retrieved_contexts": {"billing": chunks},
+    }
