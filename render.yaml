@@ -1,14 +1,12 @@
 services:
   - type: web
     name: multi-agent-ai-customer-support-backend
-    env: python
-    plan: free
+    env: docker
+    plan: starter
     region: oregon
-    pythonVersion: 3.12.9 
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     healthCheckPath: /health
     envVars:
       - key: ENVIRONMENT
         value: production
-
